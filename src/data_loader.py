@@ -1,8 +1,7 @@
 """
-Functions for loading and preprocessing data.
+Functions for loading data from various sources.
 """
 import pandas as pd
-from sklearn.model_selection import train_test_split
 from . import config
 
 def load_data(file_path: str = config.RAW_DATA_PATH) -> pd.DataFrame:
@@ -17,35 +16,14 @@ def load_data(file_path: str = config.RAW_DATA_PATH) -> pd.DataFrame:
     """
     return pd.read_csv(file_path)
 
-def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
+def load_processed_data(file_path: str = config.PROCESSED_DATA_PATH) -> pd.DataFrame:
     """
-    Preprocess the raw data.
+    Load previously processed data from CSV file.
     
     Args:
-        df (pd.DataFrame): Raw data
+        file_path (str): Path to the processed CSV file
         
     Returns:
-        pd.DataFrame: Preprocessed data
+        pd.DataFrame: Processed data
     """
-    # Add preprocessing steps here
-    return df
-
-def split_data(df: pd.DataFrame, target_col: str = config.TARGET_COLUMN):
-    """
-    Split data into training and testing sets.
-    
-    Args:
-        df (pd.DataFrame): Input data
-        target_col (str): Name of target column
-        
-    Returns:
-        tuple: (X_train, X_test, y_train, y_test)
-    """
-    X = df.drop(columns=[target_col])
-    y = df[target_col]
-    
-    return train_test_split(
-        X, y,
-        test_size=config.TEST_SIZE,
-        random_state=config.RANDOM_STATE
-    )
+    return pd.read_csv(file_path)

@@ -15,17 +15,27 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def setup_directories(dirs: list) -> None:
+
+def save_processed_data(df: pd.DataFrame, output_path: str) -> None:
     """
-    Create directories if they don't exist.
+    Save processed data to CSV with metadata.
     
     Args:
-        dirs (list): List of directory paths
+        df (pd.DataFrame): Processed data
+        output_path (str): Path to save the data
     """
-    for dir_path in dirs:
-        if not os.path.exists(dir_path):
-            os.makedirs(dir_path)
-            logger.info(f"Created directory: {dir_path}")
+    # Create directory if it doesn't exist
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    
+    # Add processing metadata
+    df = df.copy()
+    df.attrs['processing_timestamp'] = datetime.now().isoformat()
+    df.attrs['n_rows'] = len(df)
+    df.attrs['n_columns'] = len(df.columns)
+    
+    # Save to CSV
+    df.to_csv(output_path, index=False)
+    logger.info(f"Saved processed data to: {output_path} (Shape: {df.shape})")
 
 def save_predictions(df: pd.DataFrame, predictions: np.ndarray, 
                     probabilities: np.ndarray, output_path: str) -> None:

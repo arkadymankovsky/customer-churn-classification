@@ -5,25 +5,29 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.data_loader import load_data, preprocess_data, split_data
+from src.data_loader import load_data
+from src.preprocessing import preprocess_data
+from src.data_preparation import split_data
 from src.feature_engineering import FeatureEngineer
 from src.model import ChurnModel
 from src.evaluation import calculate_metrics, save_metrics
-from src.utils import setup_directories
+from src.utils import save_processed_data
 from src import config
 
-def main():
-    # Create necessary directories
-    setup_directories(['models', 'results'])
-    
+def main():    
     # Load and preprocess data
     print("Loading data...")
     df = load_data()
-    df = preprocess_data(df)
+    print("Preprocessing data...")
+    df_processed = preprocess_data(df)
+    
+    # Save processed data
+    print("Saving processed data...")
+    save_processed_data(df_processed, config.PROCESSED_DATA_PATH)
     
     # Split data
     print("Splitting data...")
-    X_train, X_test, y_train, y_test = split_data(df)
+    X_train, X_test, y_train, y_test = split_data(df_processed)
     
     # Feature engineering
     print("Engineering features...")
