@@ -5,14 +5,14 @@ import pandas as pd
 import numpy as np
 from typing import Tuple, Optional
 from sklearn.model_selection import train_test_split, KFold, StratifiedKFold
-from . import config
+from . import config, model_config
 
 def split_data(
     df: pd.DataFrame,
-    target_col: str = config.TARGET_COLUMN,
-    test_size: float = config.TEST_SIZE,
+    target_col: str = model_config.TARGET_COLUMN,
+    test_size: float = model_config.TEST_SIZE,
     stratify: bool = True,
-    random_state: int = config.RANDOM_STATE
+    random_state: int = model_config.RANDOM_STATE
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
     """
     Split data into training and testing sets.
@@ -27,7 +27,7 @@ def split_data(
     Returns:
         tuple: (X_train, X_test, y_train, y_test)
     """
-    X = df.drop(columns=[target_col])
+    X = df[model_config.NUMERICAL_FEATURES + model_config.CATEGORICAL_FEATURES]
     y = df[target_col]
     
     stratify_param = y if stratify else None
@@ -40,28 +40,32 @@ def split_data(
     )
 
 def create_folds(
-    df: pd.DataFrame,
-    target_col: str = config.TARGET_COLUMN,
+    X: pd.DataFrame,
+    y: Optional[pd.Series] = None,
     n_splits: int = 5,
     stratify: bool = True,
     shuffle: bool = True,
-    random_state: int = config.RANDOM_STATE
+    random_state: int = model_config.RANDOM_STATE
 ) -> pd.DataFrame:
     """
     Create cross-validation folds and add fold indices to the dataframe.
+    Can handle both:
+    1. A single DataFrame with target column (old behavior)
+    2. Separate feature matrix X and target vector y (new behavior)
     
     Args:
-        df (pd.DataFrame): Input data
-        target_col (str): Name of target column
+        X (pd.DataFrame): Either complete DataFrame with target column or feature matrix
+        y (Optional[pd.Series]): Target vector if X is feature matrix, None if X is complete DataFrame
         n_splits (int): Number of folds
         stratify (bool): Whether to maintain class distribution in folds
         shuffle (bool): Whether to shuffle before splitting
         random_state (int): Random seed for reproducibility
         
     Returns:
-        pd.DataFrame: Original dataframe with additional 'fold' column
+        pd.DataFrame: DataFrame with additional 'fold' column
     """
-    df = df.copy()
+    # Create a copy to avoid modifying the original data
+    X = X.copy()
     
     if stratify:
         kf = StratifiedKFold(
@@ -69,17 +73,20 @@ def create_folds(
             shuffle=shuffle,
             random_state=random_state
         )
-        splits = kf.split(df, df[target_col])
+        # If y is provided separately, use it directly
+        target_for_split = y if y is not None else X[config.TARGET_COLUMN]
+        splits = kf.split(X, target_for_split)
     else:
         kf = KFold(
             n_splits=n_splits,
             shuffle=shuffle,
             random_state=random_state
         )
-        splits = kf.split(df)
+        splits = kf.split(X)
     
-    df['fold'] = -1
+    # Add fold column to X
+    X['fold'] = -1
     for fold, (_, val_idx) in enumerate(splits):
-        df.loc[val_idx, 'fold'] = fold
+        X.loc[val_idx, 'fold'] = fold
     
-    return df 
+    return X 
